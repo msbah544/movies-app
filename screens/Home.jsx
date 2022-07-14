@@ -1,22 +1,35 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View, Dimensions } from "react-native";
-import axios from "axios";
-import { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Dimensions,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
+import React, { useState, useEffect } from "react";
 import { SliderBox } from "react-native-image-slider-box";
+import {
+  getUpcomingMovies,
+  getPopularMovies,
+  getPopularTv,
+  getFamilyMovies,
+  getDocumentaryMovies,
+} from "../services/services";
+import List from "../components/List";
 
 const App = () => {
-  const [loading, setIsLoading] = useState(true);
-  //const [data, setData] = useState("data");
-  const [error, setError] = useState(false);
   const [upComingMovies, setUpComingMovies] = useState([]);
-  const loadingMsg = "loading...";
+  const [popularMovies, setPopularMovies] = useState();
+  const [popularTV, setPopularTV] = useState([]);
+  const [familyMovies, setFamilyMovies] = useState([]);
+  const [documentaryMovies, setDocumentaryMovies] = useState([]);
+  const [loaded, setLoaded] = useState(false);
   const dimensions = Dimensions.get("screen");
 
-  const getPopularMovies = async () => {
-    return await axios
-      .get(
-        "https://api.themoviedb.org/3/movie/popular?api_key=da2285ac0fa6b3d48c769beec4e32cb4"
-      )
+  useEffect(() => {
+    //GET UPCOMING MOVIES
+    getUpcomingMovies()
       .then((response) => {
         const { data } = response;
         const movieImagesArray = [];
@@ -25,45 +38,100 @@ const App = () => {
             "https://image.tmdb.org/t/p/w500" + movie.poster_path
           )
         );
-
         setUpComingMovies(movieImagesArray);
-        setIsLoading(false);
       })
-      .catch((err) => {
-        setError(err);
-      });
-  };
-  useEffect(() => {
-    getPopularMovies();
+      .catch((err) => {});
+    //GET POPULAR MOVIES
+    getPopularMovies()
+      .then((response) => {
+        const { data } = response;
+        setPopularMovies(data.results);
+      })
+      .catch((err) => {});
+    //GET POPULAR TV
+    getPopularTv()
+      .then((response) => {
+        const { data } = response;
+        setPopularTV(data.results);
+      })
+      .catch((err) => {});
+    //GET FAMILY MOVIES
+    getFamilyMovies()
+      .then((response) => {
+        const { data } = response;
+        setFamilyMovies(data.results);
+      })
+      .catch((err) => {});
+    //GET FAMILY MOVIES
+    getDocumentaryMovies()
+      .then((response) => {
+        const { data } = response;
+        setDocumentaryMovies(data.results);
+      })
+      .catch((err) => {})
+      .finally(() => setLoaded(true));
   }, []);
-  //getPopularMovies();
 
   return (
-    <View style={styles.contents}>
-      <View>
-        {loading ? (
-          <Text>{loadingMsg}</Text>
-        ) : error ? (
-          <Text style={{ color: "red" }}>Server error!</Text>
-        ) : (
-          <SliderBox
-            images={upComingMovies}
-            circleLoop={true}
-            autoplay={true}
-            sliderBoxHeight={dimensions.height / 1.5}
-            dotStyle={{ height: 0 }}
-          />
-        )}
-      </View>
-      <StatusBar style="auto" />
-    </View>
+    <React.Fragment>
+      {loaded && (
+        <ScrollView>
+          <View style={styles.sliderContainer}>
+            {upComingMovies && (
+              <SliderBox
+                images={upComingMovies}
+                circleLoop={true}
+                autoplay={true}
+                sliderBoxHeight={dimensions.height / 1.5}
+                dotStyle={{ height: 0 }}
+              />
+            )}
+          </View>
+
+          {popularMovies && (
+            <View style={styles.carousel}>
+              <List movies={popularMovies} title="Popular Movies" />
+            </View>
+          )}
+          {popularTV && (
+            <View style={styles.carousel}>
+              <List movies={popularTV} title="Popular TV" />
+            </View>
+          )}
+          {familyMovies && (
+            <View style={styles.carousel}>
+              <List movies={familyMovies} title="Family Movies" />
+            </View>
+          )}
+          {documentaryMovies && (
+            <View style={styles.carousel}>
+              <List movies={documentaryMovies} title="Documentary Movies" />
+            </View>
+          )}
+
+          <StatusBar style="auto" />
+        </ScrollView>
+      )}
+      {!loaded && (
+        <ActivityIndicator style={styles.loadingComponent} size="large" />
+      )}
+    </React.Fragment>
   );
 };
 
 const styles = StyleSheet.create({
-  contents: {
+  sliderContainer: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  carousel: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingComponent: {
+    flex: 1,
     justifyContent: "center",
   },
 });
