@@ -1,8 +1,11 @@
 import { View, Image, StyleSheet, TouchableOpacity, Text } from "react-native";
 const backupImage = require("../assets/images/image-gallery.png");
-const Card = ({ item }) => {
+const Card = ({ item, navigation }) => {
   return (
-    <TouchableOpacity style={styles.container}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={() => navigation.navigate("Details", { movieDetail: item })}
+    >
       <Image
         resizeMode="cover"
         style={styles.image}
